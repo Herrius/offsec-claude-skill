@@ -7,6 +7,63 @@ description: Offensive security skill for pentesting, red team operations, netwo
 
 Specialized skill for penetration testing, red team operations, network security assessments, and CTF competition strategy.
 
+## Dynamic Context Loading (CRITICAL)
+
+**This is NOT a passive reference.** As you work through any pentesting, red team, or CTF exercise, you MUST proactively consult the files in this skill directory based on what you DISCOVER during the workflow — not only when the user asks about a topic.
+
+**Skill base path:** `/home/enrique/.claude/skills/offsec/`
+
+### How It Works
+
+Think of these files as your personal notes and cheatsheets. A real pentester checks their notes when they encounter something — you should do the same. **Read the relevant files at the moment you need them in your workflow**, not all upfront.
+
+### Trigger: Discovery-Based Loading
+
+Read the relevant files when YOUR OWN FINDINGS during the engagement trigger it:
+
+| You discover / encounter... | Read these files |
+|----------------------------|-----------------|
+| Open ports, need to scan deeper | `tools/nmap.md` |
+| A web application running | `workflows/web-pentest.md` + `tools/burp-suite.md` |
+| Directories/vhosts to enumerate | `tools/ffuf-gobuster.md` |
+| SQL injection vector | `tools/sqlmap.md` |
+| Hashes to crack | `tools/hashcat-john.md` |
+| Active Directory environment | `tools/bloodhound.md` + `tools/crackmapexec.md` + `tools/impacket.md` |
+| ADCS / certificates in AD | `tools/certipy.md` |
+| NTLM traffic, need to poison/relay | `tools/responder-relay.md` |
+| Need to exploit with Metasploit | `configs/metasploit-commands.md` |
+| PCAP to analyze | `configs/wireshark-filters.md` |
+| Linux shell, need privesc | `tools/linpeas-winpeas.md` |
+| Windows shell, need privesc | `tools/linpeas-winpeas.md` |
+| Need a custom script/exploit | `scripts/` directory (read relevant script) |
+| Need wordlists or web shells | `configs/custom-tools.md` |
+| Starting a new engagement | `checklists/pre-engagement.md` + `workflows/combat-methodology.md` |
+| Reconnaissance phase | `checklists/reconnaissance.md` |
+| Writing the final report | `workflows/reporting.md` + `checklists/reporting.md` |
+| Stuck or losing focus | `workflows/combat-methodology.md` |
+| CTF competition | CTF Strategy section (this file, below) |
+
+### Workflow Examples
+
+**Example 1: Pentesting a box**
+1. User says "pentest 10.10.10.5" → Read `checklists/reconnaissance.md` before starting nmap
+2. Nmap finds port 80, 445 → Read `tools/nmap.md` for deeper enumeration flags, then `workflows/web-pentest.md` for the web app, and `tools/crackmapexec.md` for SMB
+3. Web app has login form → Read `tools/burp-suite.md` + `tools/ffuf-gobuster.md`
+4. Find SQLi → Read `tools/sqlmap.md`
+5. Get credentials, dump hashes → Read `tools/hashcat-john.md`
+6. Get shell, need privesc → Read `tools/linpeas-winpeas.md`
+
+**Example 2: AD engagement**
+1. User says "attack this AD lab" → Read `checklists/pre-engagement.md` + `workflows/network-pentest.md`
+2. Find domain controller → Read `tools/crackmapexec.md` + `tools/bloodhound.md`
+3. Responder catches hash → Read `tools/responder-relay.md` + `tools/hashcat-john.md`
+4. Need Kerberos attack → Read `tools/impacket.md`
+5. Find ADCS → Read `tools/certipy.md`
+
+**Key rule: Read BEFORE you execute.** If you're about to run nmap, read `tools/nmap.md` first. If you found a hash, read `tools/hashcat-john.md` before cracking. This ensures you use optimal flags, techniques, and avoid common mistakes.
+
+---
+
 ## When to Use This Skill
 
 Invoke this skill when the user needs help with:
