@@ -30,19 +30,22 @@ As you work through any engagement, proactively load the relevant files based on
 |----------------------------|-----------------|
 | Open ports, need deeper scan | `tools/nmap.md` |
 | Web application | `workflows/web-pentest.md` + `tools/burp-suite.md` |
+| Incremental IDs in URLs (IDOR) | `workflows/web-pentest.md` (IDOR section) |
 | Directories/vhosts to enumerate | `tools/ffuf-gobuster.md` |
 | SQL injection vector | `tools/sqlmap.md` |
 | Hashes to crack | `tools/hashcat-john.md` |
+| Credentials found (any source) | `references/credential-reuse.md` |
+| PCAP file to analyze | `configs/wireshark-filters.md` + `scripts/pcap_creds.py` |
 | Active Directory environment | `tools/bloodhound.md` + `tools/crackmapexec.md` + `tools/impacket.md` |
 | ADCS / certificates in AD | `tools/certipy.md` |
 | NTLM traffic, need to poison/relay | `tools/responder-relay.md` |
 | Metasploit exploitation | `configs/metasploit-commands.md` |
-| PCAP to analyze | `configs/wireshark-filters.md` |
-| Linux shell, need privesc | `tools/linpeas-winpeas.md` |
+| Linux shell, need privesc | `tools/linpeas-winpeas.md` + check `getcap -r / 2>/dev/null` |
 | Windows shell, need privesc | `tools/linpeas-winpeas.md` |
 | Wordlists or web shells needed | `configs/custom-tools.md` |
 | Starting a new engagement | `checklists/pre-engagement.md` + `workflows/combat-methodology.md` |
-| Reconnaissance phase | `checklists/reconnaissance.md` |
+| Reconnaissance phase (HTB/CTF/lab) | `checklists/reconnaissance.md` (Lab Quick-Start section) |
+| Reconnaissance phase (real engagement) | `checklists/reconnaissance.md` (Full section) |
 | Writing the final report | `workflows/reporting.md` + `checklists/reporting.md` |
 | Stuck or losing focus | `workflows/combat-methodology.md` |
 | CTF competition | `references/ctf-strategy.md` |
@@ -103,9 +106,13 @@ Before installing ANY tool:
 ### References (`references/`)
 - **ctf-strategy.md** — CTF competition strategy, time management, category quick-reference
 - **modern-attacks.md** — API security, HTTP smuggling, cache poisoning, cloud attacks
+- **credential-reuse.md** — What to do when you find credentials: where to spray, reuse patterns
+
+### Scripts (`scripts/`)
+- **pcap_creds.py** — Extract credentials from PCAP files (FTP, HTTP Basic, Telnet)
 
 ### Checklists (`checklists/`)
-- Pre-engagement, reconnaissance, reporting
+- Pre-engagement, reconnaissance (with lab quick-start variant), reporting
 
 ### Configs (`configs/`)
 - Metasploit commands, Wireshark filters, custom tool setups

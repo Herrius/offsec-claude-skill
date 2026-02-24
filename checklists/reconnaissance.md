@@ -1,213 +1,212 @@
-# Reconnaissance Checklist
+# Reconnaissance
 
-Comprehensive information gathering phase checklist.
-
----
-
-## Passive Reconnaissance
-
-### OSINT - Open Source Intelligence
-
-**Domain Information:**
-- [ ] WHOIS lookup performed
-- [ ] DNS records enumerated (A, AAAA, MX, NS, TXT, SOA)
-- [ ] Historical DNS data checked
-- [ ] Domain registration info gathered
-- [ ] Registrar information documented
-- [ ] Domain age identified
-- [ ] SSL/TLS certificate information extracted
-
-**Subdomain Discovery:**
-- [ ] Certificate transparency logs checked
-- [ ] Search engine dorking performed
-- [ ] DNS brute forcing completed
-- [ ] Zone transfer attempted
-- [ ] Subdomain takeover possibilities identified
-
-**Organization Information:**
-- [ ] Company structure researched
-- [ ] Key personnel identified
-- [ ] Email formats discovered
-- [ ] Phone numbers collected
-- [ ] Physical locations identified
-- [ ] Social media profiles found
-
-**Technical Footprint:**
-- [ ] ASN and IP ranges identified
-- [ ] Hosting provider determined
-- [ ] CDN usage identified
-- [ ] Technology stack identified
-- [ ] Third-party services documented
-- [ ] API endpoints discovered
-
-**Data Leaks:**
-- [ ] Breach databases checked
-- [ ] Pastebin searches performed
-- [ ] GitHub/GitLab repositories searched
-- [ ] Credentials in public repos checked
-- [ ] Exposed documents found
-- [ ] Metadata from documents analyzed
+Two variants: a fast lab checklist (HTB, THM, CTFs) and a full engagement checklist (real pentests). The trigger table in SKILL.md tells you which to use.
 
 ---
 
-## Active Reconnaissance
+## Lab Quick-Start (HTB / THM / CTFs)
 
-### Network Enumeration
+For single-target boxes where you know the IP and the goal is flags. Get from "here's the IP" to "I know what to attack" in under 10 minutes.
 
-**Host Discovery:**
-- [ ] Ping sweeps performed
-- [ ] ARP scans completed (if local)
-- [ ] Live hosts identified
-- [ ] Network ranges mapped
+### Step 1: Full port scan (2-3 minutes)
 
-**Port Scanning:**
-- [ ] Quick scan (top 1000 ports)
-- [ ] Full port scan (1-65535)
-- [ ] UDP scan performed
-- [ ] Service version detection
-- [ ] OS fingerprinting completed
+```bash
+# All TCP ports, fast
+nmap -Pn -sS -p- -T4 --min-rate 5000 <TARGET> -oA initial
 
-**Service Enumeration:**
-- [ ] Banner grabbing performed
-- [ ] Service-specific enumeration:
-  - [ ] HTTP/HTTPS (web servers)
-  - [ ] FTP (file transfer)
-  - [ ] SSH (remote access)
-  - [ ] Telnet
-  - [ ] SMTP (email)
-  - [ ] DNS (domain name)
-  - [ ] SMB/NetBIOS (file sharing)
-  - [ ] SNMP (network management)
-  - [ ] LDAP (directory services)
-  - [ ] RDP (remote desktop)
-  - [ ] Database services
+# Parse open ports for deep scan
+ports=$(grep -oP '\d+/open' initial.nmap | cut -d/ -f1 | tr '\n' ',' | sed 's/,$//')
+nmap -sV -sC -p $ports <TARGET> -oA detailed
+```
 
----
-
-## Web Application Recon
-
-**Technology Identification:**
-- [ ] Web server identified
-- [ ] Application framework detected
-- [ ] Programming language identified
-- [ ] CMS identified (if applicable)
-- [ ] JavaScript libraries identified
-- [ ] WAF/security controls detected
-
-**Content Discovery:**
-- [ ] Directory enumeration completed
-- [ ] File enumeration performed
-- [ ] Hidden parameters discovered
-- [ ] Backup files searched
-- [ ] Source code comments reviewed
-- [ ] Robots.txt examined
-- [ ] Sitemap.xml retrieved
-
-**Application Mapping:**
-- [ ] Site spidered/crawled
-- [ ] All endpoints documented
-- [ ] Input vectors identified
-- [ ] Authentication mechanisms mapped
-- [ ] Session management reviewed
-- [ ] API endpoints discovered
-
----
-
-## Social Engineering Recon
-
-**Personnel:**
-- [ ] Employee names collected
-- [ ] Email addresses harvested
-- [ ] Job roles identified
-- [ ] Organization chart mapped
-- [ ] Key decision makers identified
-
-**Social Media:**
-- [ ] LinkedIn profiles reviewed
-- [ ] Twitter accounts found
-- [ ] Facebook presence checked
-- [ ] Professional blogs identified
-- [ ] Conference presentations found
-
-**Physical Security:**
-- [ ] Office locations identified
-- [ ] Building access methods noted
-- [ ] Security measures observed
-- [ ] Employee routines identified (if authorized)
-
----
-
-## Wireless Reconnaissance (if in scope)
-
-- [ ] Wireless networks identified
-- [ ] SSIDs collected
-- [ ] Encryption methods noted
-- [ ] Signal strength measured
-- [ ] Access point locations mapped
-- [ ] Hidden networks detected
-
----
-
-## Cloud Infrastructure
-
-**AWS:**
-- [ ] S3 buckets enumerated
-- [ ] Public snapshots checked
-- [ ] EC2 instances identified
-- [ ] Lambda functions discovered
-
-**Azure:**
-- [ ] Storage accounts enumerated
-- [ ] Public blobs identified
-- [ ] VM instances located
-
-**GCP:**
-- [ ] Storage buckets found
-- [ ] Compute instances identified
-
----
-
-## Documentation
-
-- [ ] All findings documented
-- [ ] Screenshots collected
-- [ ] Network diagrams created
-- [ ] Asset inventory compiled
-- [ ] Attack surface mapped
-- [ ] Initial vulnerabilities noted
-
----
-
-## Tools Used
-
-Document which tools were used:
-- [ ] nmap
-- [ ] subfinder/sublist3r
-- [ ] amass
-- [ ] whatweb
-- [ ] nikto
-- [ ] gobuster/ffuf
-- [ ] recon-ng
-- [ ] theHarvester
-- [ ] shodan
-- [ ] Custom scripts
-
----
-
-## Next Steps
-
-- [ ] Prioritize targets for exploitation
-- [ ] Identify high-value targets
-- [ ] Plan vulnerability assessment phase
-- [ ] Brief team on findings
-- [ ] Update client on progress
-
----
-
-## Notes
+### Step 2: Quick decisions based on what's open
 
 ```
-Key findings and observations:
+Port 80/443/8080? → Browse it manually. Check:
+    - What is the app? (CMS, custom, API, dashboard)
+    - Login page? Default creds first (admin:admin, admin:password)
+    - Interesting URLs or parameters?
+    - View source → comments, JS files, hidden paths
+    - Check /robots.txt, /sitemap.xml
+    Then: ffuf for directory enumeration
 
-[Space for engagement-specific notes]
+Port 21 (FTP)? → Try anonymous login:
+    ftp <TARGET>  # user: anonymous, pass: (empty or email)
+
+Port 445 (SMB)? → Enumerate shares:
+    smbclient -L //<TARGET> -N
+    crackmapexec smb <TARGET> --shares -u '' -p ''
+
+Port 22 (SSH)? → Note version, save for later (need creds first)
+
+Port 139/445 + 88 (Kerberos)? → Domain controller. Read tools/bloodhound.md
+
+Other unusual ports? → Google "port XXXX exploit" or check with nmap scripts:
+    nmap -sV --script=default,vuln -p <PORT> <TARGET>
 ```
+
+### Step 3: Web app deep dive (if web service found)
+
+```bash
+# Directory enumeration
+ffuf -u http://<TARGET>/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -mc 200,301,302,403
+
+# Virtual host enumeration (if hostname found)
+ffuf -u http://<TARGET> -H "Host: FUZZ.<DOMAIN>" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs <default_size>
+
+# Tech stack identification
+whatweb http://<TARGET>
+curl -sI http://<TARGET>
+```
+
+### Step 4: Look for low-hanging fruit
+
+Before going deep on any single vector, check all of these:
+- **Default credentials** on every login form and service
+- **IDOR** — if URLs have numeric IDs (`/data/1`, `/user/5`), try other numbers (especially 0 and 1)
+- **Source code** — view page source, check JS files for API endpoints or hardcoded secrets
+- **Known CVEs** — search the exact service version: `searchsploit <service> <version>`
+- **Config files** — try common paths: `.env`, `config.php`, `web.config`, `.git/HEAD`
+
+### Step 5: Document as you go
+
+```bash
+# Create working directory
+mkdir ~/target_name && cd ~/target_name
+
+# Save all nmap output with -oA flag (already done in step 1)
+# Log interesting findings immediately — you WILL forget otherwise
+echo "Found IDOR at /data/0 — downloads PCAP" >> notes.txt
+```
+
+---
+
+## Full Reconnaissance (Real Engagements)
+
+For authorized pentests with defined scope, where thoroughness matters for the report.
+
+### Passive Reconnaissance
+
+Do this BEFORE sending a single packet to the target.
+
+**Domain & Infrastructure:**
+```bash
+# WHOIS
+whois target.com
+
+# DNS records — all types
+dig target.com ANY +noall +answer
+dig target.com A AAAA MX NS TXT SOA
+
+# Certificate transparency — discover subdomains
+curl -s "https://crt.sh/?q=%25.target.com&output=json" | jq -r '.[].name_value' | sort -u
+
+# Subdomain enumeration
+subfinder -d target.com -o subdomains.txt
+amass enum -passive -d target.com -o amass_subdomains.txt
+
+# ASN and IP ranges
+whois -h whois.radb.net -- '-i origin AS<NUMBER>'
+
+# Historical data
+# Check Wayback Machine: web.archive.org
+# Check SecurityTrails for DNS history
+```
+
+**OSINT:**
+```bash
+# Email harvesting
+theHarvester -d target.com -b all
+
+# Google dorks
+# site:target.com filetype:pdf
+# site:target.com inurl:admin
+# site:target.com intitle:"index of"
+# "target.com" password OR secret OR key
+
+# GitHub search
+# org:targetorg password OR secret OR key OR token
+# "target.com" filename:.env
+
+# Breach/credential databases
+# Check haveibeenpwned API for known breaches
+# Search dehashed.com (with authorization)
+```
+
+**Technology fingerprinting:**
+```bash
+# Identify CDN, WAF, hosting
+dig target.com +short
+curl -sI https://target.com | grep -i "server\|x-powered-by\|cf-ray\|x-amz"
+
+# Shodan (passive)
+shodan host <IP>
+shodan search "hostname:target.com"
+```
+
+### Active Reconnaissance
+
+**Network scanning:**
+```bash
+# Host discovery (for ranges)
+nmap -sn <RANGE>/24 -oA host_discovery
+
+# Port scanning — tiered approach
+# Quick scan first
+nmap -sS -T4 --min-rate 5000 -p- <TARGETS> -oA full_tcp
+# Detailed service scan on open ports
+nmap -sV -sC -p <OPEN_PORTS> <TARGETS> -oA service_detail
+# UDP top 20 (don't skip)
+nmap -sU --top-ports 20 <TARGETS> -oA udp_top20
+```
+
+**Web application recon:**
+```bash
+# Full tech stack
+whatweb -a 3 https://target.com
+nikto -h https://target.com
+
+# Directory and file enumeration
+ffuf -u https://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -mc 200,301,302,403 -o dirs.json
+ffuf -u https://target.com/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -mc 200,301,302,403 -o files.json
+
+# Virtual host enumeration
+ffuf -u https://target.com -H "Host: FUZZ.target.com" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs <default_size>
+
+# Crawl and extract endpoints
+katana -u https://target.com -d 3 -o katana_endpoints.txt
+
+# JS file analysis
+# Download all JS, search for API routes, secrets, internal hostnames
+```
+
+**Service-specific enumeration:**
+```bash
+# SMB
+crackmapexec smb <TARGET> --shares -u '' -p ''
+enum4linux-ng <TARGET>
+
+# SNMP
+onesixtyone -c /usr/share/seclists/Discovery/SNMP/snmp.txt <TARGET>
+snmpwalk -v2c -c public <TARGET>
+
+# LDAP
+ldapsearch -x -h <TARGET> -b "dc=target,dc=com"
+
+# NFS
+showmount -e <TARGET>
+```
+
+### Documentation Requirements
+
+For real engagements, document EVERYTHING:
+
+- [ ] All findings with timestamps
+- [ ] Screenshots of each discovery
+- [ ] Network diagram with discovered hosts
+- [ ] Complete asset inventory (IPs, hostnames, services, versions)
+- [ ] Attack surface map (entry points ranked by likelihood)
+- [ ] Initial vulnerability hypotheses
+- [ ] Tools used with exact commands
+
+This documentation feeds directly into the report. See `workflows/reporting.md`.
