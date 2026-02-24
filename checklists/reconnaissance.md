@@ -63,7 +63,7 @@ curl -sI http://<TARGET>
 
 Before going deep on any single vector, check all of these:
 - **Default credentials** on every login form and service
-- **IDOR** — if URLs have numeric IDs (`/data/1`, `/user/5`), try other numbers (especially 0 and 1)
+- **IDOR** — if URLs have numeric IDs (`/data/1`, `/user/5`), enumerate a range to find other users' data
 - **Source code** — view page source, check JS files for API endpoints or hardcoded secrets
 - **Known CVEs** — search the exact service version: `searchsploit <service> <version>`
 - **Config files** — try common paths: `.env`, `config.php`, `web.config`, `.git/HEAD`
