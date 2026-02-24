@@ -77,14 +77,28 @@ Before going deep on any single vector, check all of these:
 
 ### Step 5: Document as you go
 
+Keep a running `notes.txt` throughout the entire exercise. Update it every time you discover something — a new service, credentials, a failed attempt, a successful exploit. If you don't write it down immediately, you'll forget the details when it's time to write the report.
+
 ```bash
 # Create working directory
 mkdir ~/target_name && cd ~/target_name
 
 # Save all nmap output with -oA flag (already done in step 1)
-# Log interesting findings immediately — you WILL forget otherwise
-echo "Found IDOR at /data/0 — downloads PCAP" >> notes.txt
+# Log every discovery as it happens
+echo "[recon] TCP: 22(SSH), UDP: 500(IKE)" >> notes.txt
+echo "[creds] ike-scan ID: ike@target.htb, PSK cracked: password123" >> notes.txt
+echo "[access] SSH as ike:password123 — user flag: abc123" >> notes.txt
+echo "[privesc] sudo 1.9.17 RUNPATH, CVE-2025-32463" >> notes.txt
+echo "[root] root flag: def456" >> notes.txt
 ```
+
+**What to log:** Open ports, service versions, credentials found (source + value), exploitation steps that worked, dead ends worth remembering, flags.
+
+### Step 6: Formal writeup after completion
+
+Once you have both flags (or have fully compromised the target), generate a formal writeup for the Obsidian vault. Use the CTF writeup template at `99 - Sistema/📋 plantillas/Plantilla - Writeup CTF.md` and save to `199 - maquinas/<machine_name>.md`.
+
+The writeup should reconstruct the full attack chain from your notes.txt — from reconnaissance through root — with exact commands, output snippets, and a conclusion explaining the vulnerabilities and their mitigations.
 
 ---
 

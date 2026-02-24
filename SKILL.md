@@ -69,6 +69,7 @@ As you work through any engagement, proactively load the relevant files based on
 | Starting a new engagement | `checklists/pre-engagement.md` + `workflows/combat-methodology.md` |
 | Reconnaissance phase (HTB/CTF/lab) | `checklists/reconnaissance.md` (Lab Quick-Start section) |
 | Reconnaissance phase (real engagement) | `checklists/reconnaissance.md` (Full section) |
+| Machine completed (flags obtained) | Generate formal writeup using Obsidian template `99 - Sistema/📋 plantillas/Plantilla - Writeup CTF.md` → save to `199 - maquinas/<machine_name>.md` |
 | Writing the final report | `workflows/reporting.md` + `checklists/reporting.md` |
 | Stuck or losing focus | `workflows/combat-methodology.md` |
 | CTF competition | `references/ctf-strategy.md` |
