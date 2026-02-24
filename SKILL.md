@@ -12,9 +12,31 @@ Pentesting, red team operations, network assessments, and CTF competitions.
 Understanding these boundaries prevents wasted time and bad advice:
 
 - **I can:** Plan attack paths, generate tool commands with optimal flags, analyze scan output, suggest bypass techniques, explain exploitation chains, write pentest reports, help with post-exploitation strategy, generate custom exploit code, decode/crack hashes offline
-- **I cannot:** Execute tools on targets directly, do real-time exploitation requiring precise timing (race conditions), analyze images reliably (steganography, OSINT visual, captchas), interact with live services iteratively, brute-force in real time
+- **I cannot:** Execute tools on targets directly, do real-time exploitation requiring precise timing (race conditions), analyze images reliably (steganography, OSINT visual, captchas), interact with live services iteratively, brute-force in real time, operate GUI tools (RDP, Burp UI, browser)
 - **Use me for:** Strategy, command generation, output analysis, report writing, technique research
 - **Don't rely on me for:** Live CTF solving in competition, timing-sensitive exploits, visual analysis
+
+### Nested SSH and Special Characters in Passwords
+
+When operating through a jump box (e.g., SSH to Kali VM, then SSH to target), passwords with special characters (`!`, `$`, backticks, etc.) break due to bash expansion across multiple shell layers. Inline `sshpass -p 'P@ss!word'` will fail silently or mangle the password.
+
+**Fix:** Write a helper script on the jump box that uses `SSHPASS` env variable:
+
+```bash
+# Create on the jump box (e.g., ~/connect.sh)
+cat > ~/connect.sh << 'SCRIPT'
+#!/bin/bash
+export SSHPASS="Buck3tH4TF0RM3!"
+sshpass -e ssh -o StrictHostKeyChecking=no user@TARGET "$@"
+SCRIPT
+chmod +x ~/connect.sh
+
+# Then use it for all commands on the target
+~/connect.sh 'id && cat /home/user/user.txt'
+~/connect.sh 'getcap -r / 2>/dev/null'
+```
+
+The `<< 'SCRIPT'` (quoted heredoc) prevents any expansion, and `sshpass -e` reads from the environment instead of the command line. Always use this pattern when passwords contain shell-special characters.
 
 ---
 
