@@ -19,6 +19,13 @@ ports=$(grep -oP '\d+/open' initial.nmap | cut -d/ -f1 | tr '\n' ',' | sed 's/,$
 nmap -sV -sC -p $ports <TARGET> -oA detailed
 ```
 
+**If TCP doesn't give you a clear attack path** (no web apps, no exploitable services, nothing to work with), scan UDP — services like IKE (VPN), SNMP, and TFTP only live there:
+
+```bash
+nmap -sU --top-ports 20 <TARGET> -oA udp_top20
+# Key UDP services: 53 (DNS), 69 (TFTP), 161 (SNMP), 500 (IKE/VPN), 4500 (NAT-T)
+```
+
 ### Step 2: Quick decisions based on what's open
 
 ```

@@ -61,6 +61,7 @@ As you work through any engagement, proactively load the relevant files based on
 | Active Directory environment | `tools/bloodhound.md` + `tools/crackmapexec.md` + `tools/impacket.md` |
 | ADCS / certificates in AD | `tools/certipy.md` |
 | NTLM traffic, need to poison/relay | `tools/responder-relay.md` |
+| UDP 500/4500 (IKE/IPsec VPN) | `tools/ike-vpn.md` |
 | Metasploit exploitation | `configs/metasploit-commands.md` |
 | Linux shell, need privesc | `tools/linpeas-winpeas.md` + check `getcap -r / 2>/dev/null` |
 | Windows shell, need privesc | `tools/linpeas-winpeas.md` |
@@ -124,6 +125,7 @@ Before installing ANY tool:
 - **sqlmap** — SQL injection automation, tamper scripts, OS shell
 - **responder & ntlm relay** — Network poisoning, hash capture, relay attacks
 - **linpeas & winpeas** — Privilege escalation enumeration (Linux/Windows)
+- **ike-vpn** — IKE/IPsec VPN enumeration, PSK cracking, VPN connection (ike-scan, psk-crack, vpnc, strongswan)
 
 ### References (`references/`)
 - **ctf-strategy.md** — CTF competition strategy, time management, category quick-reference

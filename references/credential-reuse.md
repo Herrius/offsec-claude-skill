@@ -85,6 +85,8 @@ People use predictable patterns. If you found `Summer2025`, also try:
 | Kerberos TGS (Kerberoast) | Service account hash | Crack → use for lateral movement |
 | NTLM hash | Windows hash | Pass-the-Hash (no cracking needed) |
 | Database dump | User table with hashes | Crack → try on login portals and SSH |
+| VPN/IKE PSK | Pre-shared key (cracked) | Try as password for usernames found in IKE ID (e.g., `ike@host` → user `ike`, password = PSK) |
+| VPN XAUTH creds | Username + password | Try on SSH, FTP, web, DB — same as any other cleartext creds |
 
 ---
 
