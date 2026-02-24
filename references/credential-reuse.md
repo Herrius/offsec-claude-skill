@@ -6,22 +6,17 @@ Every time you find a username, password, hash, or key, systematically test it a
 
 ## The Credential Reuse Checklist
 
-When you find credentials (from PCAP, config files, databases, memory dumps, or any other source), try them on every accessible service in this order:
+When you find credentials (from PCAP, config files, databases, memory dumps, or any other source), try them on every accessible service. Start with CLI-testable services (Claude can run these directly), then hand off GUI-dependent ones to the user.
 
 ### 1. Same host, different services
 
+**CLI-testable (run these first):**
 ```bash
 # SSH
 sshpass -p 'PASSWORD' ssh user@TARGET
 
 # FTP
 curl --user 'user:PASSWORD' ftp://TARGET/
-
-# Web login
-# Try on any login form found on port 80/443/8080/8443
-
-# RDP (Windows)
-xfreerdp /u:user /p:PASSWORD /v:TARGET
 
 # WinRM (Windows)
 evil-winrm -i TARGET -u user -p PASSWORD
@@ -33,6 +28,19 @@ crackmapexec smb TARGET -u user -p PASSWORD
 mysql -h TARGET -u user -p'PASSWORD'
 psql -h TARGET -U user  # will prompt for password
 mssqlclient.py user:PASSWORD@TARGET
+```
+
+**Requires user interaction (hand off after CLI tests are done):**
+```bash
+# RDP (Windows) — graphical session, Claude cannot operate this
+xfreerdp /u:user /p:PASSWORD /v:TARGET
+# → Tell the user: "RDP requires a GUI session. Try these creds
+#   with xfreerdp and share what you find."
+
+# Web login forms — Claude can send POST requests but can't reliably
+# handle CSRF tokens, CAPTCHAs, or JS-rendered forms
+# → Tell the user: "Try these creds on the login form at http://TARGET/login
+#   and let me know the result."
 ```
 
 ### 2. Same credentials, other hosts
@@ -130,7 +138,8 @@ cmdkey /list
 Found credentials
     │
     ├── Same host has other services open?
-    │   YES → Try creds on each service (SSH, FTP, web, DB)
+    │   YES → Try CLI services first (SSH, FTP, SMB, WinRM, DB)
+    │   │     Then hand off GUI services to user (RDP, web login forms)
     │   │
     │   └── Any of them work?
     │       YES → You have new access → run post-exploitation checklist
