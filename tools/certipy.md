@@ -40,6 +40,79 @@ certipy find -u 'user@target.local' -p 'password' -dc-ip <DC_IP> -old-bloodhound
 
 ---
 
+## ADCS Triage — Evaluar Antes de Explotar
+
+Después de `certipy find -vulnerable`, evaluar en este orden de prioridad. No intentar todos los ESC secuencialmente — triagear primero.
+
+### Orden de evaluación
+
+1. **ESC1** → Template con ENROLLEE_SUPPLIES_SUBJECT + tu usuario puede enrollar → Más impactante
+2. **ESC4** → Template con ACLs escribibles para tu usuario/grupo → Modificar template → ESC1
+3. **ESC6** → CA con EDITF_ATTRIBUTESUBJECTALTNAME2 habilitado → Cualquier template sirve
+4. **ESC7** → ManageCA o ManageCertificates rights sobre la CA → Issue certs denegados
+5. **ESC8** → Web Enrollment habilitado + relay viable (ver `tools/responder-relay.md`) → Relay
+6. **ESC3** → Enrollment Agent template accesible → Enrollar en nombre de otros
+7. **ESC11** → RPC Enrollment + relay viable → Similar a ESC8 via RPC
+8. **ESC9/ESC10** → Requieren GenericWrite sobre otro usuario → Nicho
+
+### Indicadores de ADCS Muerto (dejar de intentar)
+
+| Indicador | Significa |
+|-----------|----------|
+| `certipy find -vulnerable` sin resultados | No hay misconfiguraciones obvias |
+| "Access denied" en TODOS los templates via certutil -CATemplates | Sin enrollment rights para tu usuario |
+| Todos los templates con ESS solo permiten Domain Controllers/Admins | ESC1 muerto para tu nivel de acceso |
+| Sin write ACLs en ningún template | ESC4 muerto |
+| EDITF_ATTRIBUTESUBJECTALTNAME2 no está set | ESC6 muerto |
+| Sin ManageCA/ManageCertificates | ESC7 muerto |
+| IF_ENFORCEENCRYPTICERTREQUEST en CA + Server 2025 | ESC8/ESC11 muertos |
+| Sin Enrollment Agent templates accesibles | ESC3 muerto |
+
+**Regla general:** Si `certipy find -vulnerable` no reporta nada Y verificación manual de enrollment rights muestra "Access denied" en todos los templates → **ADCS no es el vector. Mover a otro ataque.**
+
+### Grupos relevantes para ADCS
+
+- **Certificate Service DCOM Access**: Permite interacción DCOM con la CA. Si tu usuario está en este grupo, puedes usar certreq/certutil para solicitar certificados directamente desde el host comprometido.
+- **Cert Publishers**: Puede publicar certificados en AD.
+
+### Cuando certipy no alcanza la CA
+
+Si certipy falla con timeout/connection refused (CA detrás de firewall, RPC dinámico bloqueado), usar certreq desde el host comprometido:
+
+```powershell
+# Crear INF para request
+$inf = @"
+[NewRequest]
+Subject = "CN=username"
+KeySpec = 1
+KeyLength = 2048
+Exportable = TRUE
+MachineKeySet = FALSE
+[EnhancedKeyUsageExtension]
+OID=1.3.6.1.5.5.7.3.2
+"@
+Set-Content -Path "C:\Temp\req.inf" -Value $inf
+
+# Generar CSR y solicitar
+certreq -new "C:\Temp\req.inf" "C:\Temp\req.csr"
+certreq -submit -config "CA-Server\CA-Name" -attrib "CertificateTemplate:User" "C:\Temp\req.csr" "C:\Temp\cert.cer"
+```
+
+### Cross-Forest ADCS
+
+Si hay trust entre forests y una CA permite enrollment cross-forest:
+```bash
+# Enumerar CA del otro forest
+certipy find -u 'user@forestA.local' -p 'password' -dc-ip DC_FORESTB -target forestb.local
+
+# Solicitar cert cross-forest
+certipy req -u 'user@forestA.local' -p 'password' -ca 'ForestB-CA' -template 'User' -dc-ip DC_FORESTB
+```
+
+Ver `references/cross-forest-trusts.md` para más detalle sobre ataques cross-forest.
+
+---
+
 ## Escalation Scenarios (ESC1-ESC11)
 
 ### ESC1 — Misconfigured Certificate Template

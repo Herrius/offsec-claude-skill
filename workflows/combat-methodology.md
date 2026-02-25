@@ -291,6 +291,49 @@ If you've been stuck on the same vector for more than 1 hour without meaningful 
 | Crypto | Manual math on RSA | Try automated tools first (RsaCtfTool, FactorDB) |
 | Network | Scanning the same range repeatedly | Check if you missed a VLAN, service, or protocol |
 
+### Vector Exhaustion Indicators — Confirmaciones Rápidas de "Categoría Muerta"
+
+Estos no son triggers de 1 hora — son verificaciones que confirman **de forma inmediata** que toda una categoría de ataques es inviable. Cuando ves estos indicadores, deja de invertir tiempo y cambia de vector.
+
+**ADCS agotado:**
+- `certipy find -vulnerable` sin resultados + "Access denied" en todos los templates → sin enrollment rights
+- Todos los templates con ENROLLEE_SUPPLIES_SUBJECT requieren DA/DC enrollment → ESC1 muerto
+- Sin write ACLs en templates + sin ManageCA rights → ESC4/ESC7 muertos
+- IF_ENFORCEENCRYPTICERTREQUEST en CA + Server 2025 → relay a ADCS muerto
+
+**NTLM Relay agotado:**
+- Target es Server 2025+ → relay bloqueado por defecto (signing + channel binding enforced)
+- SMB signing required + LDAP channel binding → ningún protocolo acepta relay
+- Hash capturado pero relay falla en SMB, LDAP, HTTP, MSSQL → signing en todas partes
+
+**MSSQL escalation agotado:**
+- Sin SeImpersonatePrivilege ni SeAssignPrimaryTokenPrivilege → potato attacks imposibles
+- SQL Agent parado + `net start SQLSERVERAGENT` access denied → Agent job abuse imposible
+- Sin IMPERSONATE permissions + no eres sysadmin → impersonation muerta
+- `schtasks /create /ru SYSTEM` access denied → scheduled tasks privilegiados imposibles
+- CLR habilitado pero strict security on + TRUSTWORTHY off → CLR unsafe imposible
+
+**AD privilege escalation agotado:**
+- BloodHound sin path de owned → DA
+- Sin SPNs Kerberoastable, sin AS-REP roastable accounts
+- Sin GenericAll/WriteDACL/WriteOwner en objetos privilegiados
+- Sin LAPS desplegado, sin gMSA accesible, sin delegation misconfigs
+- Sin RBCD write access a computer objects
+- **→ PIVOTAR: buscar otro host, otro forest, o volver a enumerar credenciales**
+
+**Kerberos agotado:**
+- Sin SPNs en cuentas de usuario → Kerberoasting imposible
+- Sin cuentas DONT_REQUIRE_PREAUTH → AS-REP roasting imposible
+- Sin constrained delegation → no puedes impersonar via S4U2Self/S4U2Proxy
+
+**Local privilege escalation (Windows) agotado:**
+- Sin SeImpersonate → sin potato
+- Sin AlwaysInstallElevated → sin MSI privesc
+- Sin unquoted service paths con write access → sin service hijacking
+- Sin writable services → sin service binary replacement
+- Sin scheduled tasks escribibles → sin task hijacking
+- **→ Buscar credenciales almacenadas (PowerShell history, saved creds, browser passwords, registry)**
+
 **The principle:** Time is your most valuable resource. Stubbornness is not a strategy.
 
 ---

@@ -328,5 +328,7 @@ samrdump.py domain/user:password@<target>
 - **secretsdump es ruidoso** — DCSync genera eventos de replicación detectables por SOC
 - **Kerberos auth** — preferir `-k -no-pass` cuando posible, evita pasar passwords por red
 - **smbserver.py** — invaluable para transferir herramientas al target
-- **ntlmrelayx + PetitPotam** — combo clásico para escalar en AD moderno
+- **ntlmrelayx + PetitPotam** — combo clásico para escalar en AD moderno, pero verificar viabilidad primero (ver `tools/responder-relay.md` sección de viabilidad)
 - **Siempre exportar hashes a archivo** — usar `-outputfile` para no perder output
+- **MSSQL avanzado** — para linked server pivoting, OLE Automation, CLR assemblies, SQL Agent abuse, y NTLM coercion via xp_dirtree, ver `tools/mssql-attacks.md`
+- **Cross-forest** — para ataques cross-forest (Kerberoasting, TDO, ADCS), ver `references/cross-forest-trusts.md`

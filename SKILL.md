@@ -59,8 +59,13 @@ As you work through any engagement, proactively load the relevant files based on
 | Credentials found (any source) | `references/credential-reuse.md` |
 | PCAP file to analyze | `configs/wireshark-filters.md` + `scripts/pcap_creds.py` |
 | Active Directory environment | `tools/bloodhound.md` + `tools/crackmapexec.md` + `tools/impacket.md` |
+| MSSQL service (port 1433) | `tools/mssql-attacks.md` + `tools/impacket.md` |
+| Cross-forest / external trust discovered | `references/cross-forest-trusts.md` |
 | ADCS / certificates in AD | `tools/certipy.md` |
-| NTLM traffic, need to poison/relay | `tools/responder-relay.md` |
+| NTLM traffic, need to poison/relay | `tools/responder-relay.md` (check viability section first) |
+| Modern Windows (Server 2025+) | `tools/responder-relay.md` (limitations) — relay likely dead |
+| Multiple attack vectors failing | `workflows/combat-methodology.md` (Vector Exhaustion section) |
+| Tool can't reach target from attacker | Try from compromised host instead (certreq, PowerShell, net use) |
 | UDP 500/4500 (IKE/IPsec VPN) | `tools/ike-vpn.md` |
 | Metasploit exploitation | `configs/metasploit-commands.md` |
 | Linux shell, need privesc | `tools/linpeas-winpeas.md` + check `getcap -r / 2>/dev/null` |
@@ -88,9 +93,12 @@ As you work through any engagement, proactively load the relevant files based on
 **AD engagement:**
 1. "attack this AD lab" → Read `checklists/pre-engagement.md` + `workflows/network-pentest.md`
 2. Find DC → Read `tools/crackmapexec.md` + `tools/bloodhound.md`
-3. Responder catches hash → Read `tools/responder-relay.md` + `tools/hashcat-john.md`
-4. Kerberos attack → Read `tools/impacket.md`
-5. Find ADCS → Read `tools/certipy.md`
+3. Responder catches hash → Read `tools/responder-relay.md` (check viability first!) + `tools/hashcat-john.md`
+4. Find MSSQL → Read `tools/mssql-attacks.md` + `tools/impacket.md`
+5. Kerberos attack → Read `tools/impacket.md`
+6. Find ADCS → Read `tools/certipy.md` (triage section first)
+7. Find cross-forest trust → Read `references/cross-forest-trusts.md`
+8. All vectors exhausted → Read `workflows/combat-methodology.md` (Vector Exhaustion indicators)
 
 ---
 
@@ -119,12 +127,13 @@ Before installing ANY tool:
 - **ffuf & gobuster** — Web fuzzing, directory/subdomain discovery
 - **hashcat & john** — Password cracking, hash identification, rules
 - **bloodhound** — AD attack path analysis, collectors, Cypher queries
-- **certipy** — ADCS exploitation (ESC1-ESC11), certificate abuse
+- **certipy** — ADCS exploitation (ESC1-ESC11), triage decision tree, certificate abuse
 - **crackmapexec (netexec)** — Network enumeration, lateral movement, credential spraying
 - **burp suite** — Web app testing, proxy, intruder, repeater, extensions
 - **impacket** — Remote execution, credential harvesting, Kerberos attacks, NTLM relay
+- **mssql-attacks** — Advanced MSSQL: linked servers, OLE Automation, CLR, Agent jobs, NTLM coercion
 - **sqlmap** — SQL injection automation, tamper scripts, OS shell
-- **responder & ntlm relay** — Network poisoning, hash capture, relay attacks
+- **responder & ntlm relay** — Network poisoning, hash capture, relay attacks, viability matrix
 - **linpeas & winpeas** — Privilege escalation enumeration (Linux/Windows)
 - **ike-vpn** — IKE/IPsec VPN enumeration, PSK cracking, VPN connection (ike-scan, psk-crack, vpnc, strongswan)
 
@@ -132,6 +141,7 @@ Before installing ANY tool:
 - **ctf-strategy.md** — CTF competition strategy, time management, category quick-reference
 - **modern-attacks.md** — API security, HTTP smuggling, cache poisoning, cloud attacks
 - **credential-reuse.md** — What to do when you find credentials: where to spray, reuse patterns
+- **cross-forest-trusts.md** — Cross-forest trust attacks: SID filtering, Kerberoasting, TDO, ADCS, linked server pivoting
 
 ### Scripts (`scripts/`)
 - **pcap_creds.py** — Extract credentials from PCAP files (FTP, HTTP Basic, Telnet)

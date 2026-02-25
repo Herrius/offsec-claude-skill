@@ -253,12 +253,76 @@ psexec.py domain/administrator@<target> -k -no-pass
 
 ---
 
+## Viabilidad de Relay — Verificar ANTES de Invertir Tiempo
+
+No todos los targets aceptan relay. Windows moderno (especialmente Server 2025) enforce protecciones que hacen relay imposible. **Verificar esto primero** evita perder horas configurando relay que nunca funcionará.
+
+### Matriz de viabilidad por versión de Windows
+
+| Target OS | SMB Relay | LDAP Relay | ADCS HTTP (ESC8) | ADCS RPC (ESC11) |
+|-----------|-----------|------------|-------------------|-------------------|
+| Server 2016 | Si signing off | Si signing off | Si web enrollment on | Si RPC enrollment on |
+| Server 2019 | Si signing off | Si signing off | Si web enrollment on | Si RPC enrollment on |
+| Server 2022 | Si signing off | Generalmente sí | Si web enrollment on | Si RPC enrollment on |
+| **Server 2025** | **BLOQUEADO** | **BLOQUEADO** | **BLOQUEADO** | **BLOQUEADO** |
+
+### Windows Server 2025 — Relay Muerto
+
+Server 2025 enforce por defecto:
+- **LDAP signing obligatorio** — relay a LDAP/LDAPS falla
+- **LDAP channel binding obligatorio** — incluso con signing off, channel binding bloquea
+- **EPA (Extended Protection for Authentication)** — bloquea relay a HTTP/HTTPS
+- **SMB signing required** — relay a SMB falla
+
+**Si el target es Server 2025+, SALTAR relay attacks por completo.**
+
+### Pre-checks antes de relay
+
+```bash
+# 1. Verificar versión del OS
+crackmapexec smb TARGET
+# Si dice "Windows Server 2025" → abort relay
+
+# 2. Verificar SMB signing
+crackmapexec smb TARGET --gen-relay-list targets.txt
+# Si el DC NO aparece en targets.txt → SMB relay al DC es imposible
+nmap --script smb2-security-mode -p 445 TARGET
+# "message signing enabled and required" → SMB relay muerto
+
+# 3. Verificar LDAP signing
+crackmapexec ldap TARGET -u user -p pass -M ldap-checker
+# O con nmap:
+nmap -p 389 --script ldap-rootdse TARGET
+# Revisar supportedLDAPPolicies
+
+# 4. Verificar ADCS enrollment endpoint
+curl -k https://CA_SERVER/certsrv/
+# Si no existe → ESC8 imposible
+# Si IF_ENFORCEENCRYPTICERTREQUEST está habilitado en la CA → ESC8/ESC11 muertos
+```
+
+### Decisión rápida
+
+```
+¿Target es Server 2025+?
+    SÍ → SKIP relay completo, buscar otros vectores
+    NO → Verificar signing:
+        ├── SMB signing required → No SMB relay (pero LDAP/ADCS pueden funcionar)
+        ├── LDAP signing required → No LDAP relay (pero ADCS puede funcionar)
+        └── Todo signing off → Relay viable, proceder con setup
+```
+
+---
+
 ## Tips
 
-- **SMB signing en DCs** — siempre habilitado por default, no se puede relay a DCs vía SMB (pero sí a LDAP)
+- **SMB signing en DCs** — siempre habilitado por default, no se puede relay a DCs vía SMB (pero sí a LDAP en Server pre-2025)
+- **Server 2025 mató relay** — si ves "Windows Server 2025", ni intentes relay. Busca otros vectores (ADCS template abuse, Kerberos, ACL abuse)
 - **Responder + ntlmrelayx juntos** — deshabilitar SMB/HTTP en Responder para no competir con relay
 - **IPv6** — muchas redes tienen IPv6 habilitado sin monitoreo, usar `mitm6` + ntlmrelayx
-- **ADCS relay (ESC8)** — el ataque más devastador actualmente si Web Enrollment está habilitado
+- **ADCS relay (ESC8)** — devastador si Web Enrollment está habilitado Y signing no está enforced
+- **IF_ENFORCEENCRYPTICERTREQUEST** — si esta flag está en la CA, ESC8 y ESC11 están muertos (la CA requiere conexión cifrada que relay no puede proveer)
 - **Análisis mode primero** — usar `responder -A` para ver qué protocolos se usan antes de envenenar
 - **Net-NTLMv1 vs v2** — si capturas NTLMv1, se puede convertir a NTLM hash sin cracking (rainbow tables)
 - **Paciencia** — en engagements reales, dejar Responder corriendo horas o overnight para capturar más hashes
+- **Hash capturado ≠ relay exitoso** — puedes capturar un hash NTLMv2 pero si no hay target sin signing, solo puedes crackearlo offline
